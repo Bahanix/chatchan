@@ -3,45 +3,34 @@
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
   <title>Chatchan</title>
+  <script src="http://faye.chatchan.us/client.js" type="text/javascript"></script>
   <script src="/js/angular.min.js" type="text/javascript"></script>
   <script src="/js/password-generator.min.js" type="text/javascript"></script>
   <script src="/js/cryptico.min.js" type="text/javascript"></script>
-  <script src="http://faye.chatchan.us/client.js" type="text/javascript"></script>
-  <script>
-    var faye = new Faye.Client('http://faye.chatchan.us/');
-    var messagesApp = angular.module('messagesApp', [])
-    messagesApp.controller('messagesController', function($scope) {
-      $scope.newMessage = { content: '' }
-      $scope.me = {
-        privateKey: cryptico.generateRSAKey(generatePassword(40, false), 1024)
-      }
-      $scope.me.publicKey = cryptico.publicKeyString($scope.me.privateKey);
-      $scope.messages = [];
-
-      faye.subscribe('/messages', function(data) {
-        data.content = cryptico.decrypt(data.content, $scope.me.privateKey).plaintext;
-        $scope.messages.push(data);
-        $scope.$apply();
-      });
-
-      $scope.sendMessage = function() {
-        $scope.newMessage.content = cryptico.encrypt($scope.newMessage.content, $scope.me.publicKey).cipher;
-        faye.publish('/messages', $scope.newMessage);
-        $scope.newMessage = { content: '' }
-      };
-    });
-  </script>
+  <script src="/js/application.js" type="text/javascript"></script>
 </head>
 <body>
   <div ng-controller="messagesController">
-    <ul>
+    <h2>Users</h2>
+    <ul class="users">
+      <li ng-repeat="user in users">
+        <span class="user">{{user.username}} <small>{{user.publicKeyID}}</small></span>
+      </li>
+    </ul>
+    <h2>Messages</h2>
+    <ul class="messages">
       <li ng-repeat="message in messages">
+        <span class="user">{{message.user.username}} <small>{{message.user.publicKeyID}}</small></span>:
         {{message.content}}
       </li>
     </ul>
+    <form ng-submit="knock()">
+      <input type="text" placeholder="Your username" ng-model="me.username">
+      <input type="submit" value="Knock knock">
+    </form>
     <form ng-submit="sendMessage()">
-      <input type="text" ng-model="newMessage.content">
-      <input type="submit" value="send">
+      <input type="text" placeholder="Your message" ng-disabled="newMessage.disabled" ng-model="newMessage.content">
+      <input type="submit" value="Send">
     </form>
   </div>
 </body>
