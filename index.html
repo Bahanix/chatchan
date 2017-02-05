@@ -1,0 +1,49 @@
+<!doctype html>
+<html ng-app="messagesApp">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>Chatchan</title>
+  <script src="/js/angular.min.js" type="text/javascript"></script>
+  <script src="/js/password-generator.min.js" type="text/javascript"></script>
+  <script src="/js/cryptico.min.js" type="text/javascript"></script>
+  <script src="http://faye.chatchan.us/client.js" type="text/javascript"></script>
+  <script>
+    var faye = new Faye.Client('http://faye.chatchan.us/');
+    var messagesApp = angular.module('messagesApp', [])
+    messagesApp.controller('messagesListController', function($scope) {
+      var messagesList = this;
+      var newMessage = { content: '' }
+      var me = {
+        privateKey: cryptico.generateRSAKey(generatePassword(40, false), 1024)
+      }
+      me.publicKey = cryptico.publicKeyString(me.privateKey);
+      messagesList.messages = [];
+
+      faye.subscribe('/messages', function(data) {
+        data.content = cryptico.decrypt(data.content, me.privateKey).plaintext;
+        messagesList.messages.push(data);
+        $scope.$apply();
+      });
+
+      messagesList.sendMessage = function() {
+        messagesList.newMessage.content = cryptico.encrypt(messagesList.newMessage.content, me.publicKey).cipher;
+        faye.publish('/messages', messagesList.newMessage);
+        messagesList.newMessage = { content: '' }
+      };
+    });
+  </script>
+</head>
+<body>
+  <div ng-controller="messagesListController as messagesList">
+    <ul>
+      <li ng-repeat="message in messagesList.messages">
+        {{message.content}}
+      </li>
+    </ul>
+    <form ng-submit="messagesList.sendMessage()">
+      <input type="text" ng-model="messagesList.newMessage.content">
+      <input type="submit" value="send">
+    </form>
+  </div>
+</body>
+</html>
