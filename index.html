@@ -10,38 +10,37 @@
   <script>
     var faye = new Faye.Client('http://faye.chatchan.us/');
     var messagesApp = angular.module('messagesApp', [])
-    messagesApp.controller('messagesListController', function($scope) {
-      var messagesList = this;
-      var newMessage = { content: '' }
-      var me = {
+    messagesApp.controller('messagesController', function($scope) {
+      $scope.newMessage = { content: '' }
+      $scope.me = {
         privateKey: cryptico.generateRSAKey(generatePassword(40, false), 1024)
       }
-      me.publicKey = cryptico.publicKeyString(me.privateKey);
-      messagesList.messages = [];
+      $scope.me.publicKey = cryptico.publicKeyString($scope.me.privateKey);
+      $scope.messages = [];
 
       faye.subscribe('/messages', function(data) {
-        data.content = cryptico.decrypt(data.content, me.privateKey).plaintext;
-        messagesList.messages.push(data);
+        data.content = cryptico.decrypt(data.content, $scope.me.privateKey).plaintext;
+        $scope.messages.push(data);
         $scope.$apply();
       });
 
-      messagesList.sendMessage = function() {
-        messagesList.newMessage.content = cryptico.encrypt(messagesList.newMessage.content, me.publicKey).cipher;
-        faye.publish('/messages', messagesList.newMessage);
-        messagesList.newMessage = { content: '' }
+      $scope.sendMessage = function() {
+        $scope.newMessage.content = cryptico.encrypt($scope.newMessage.content, $scope.me.publicKey).cipher;
+        faye.publish('/messages', $scope.newMessage);
+        $scope.newMessage = { content: '' }
       };
     });
   </script>
 </head>
 <body>
-  <div ng-controller="messagesListController as messagesList">
+  <div ng-controller="messagesController">
     <ul>
-      <li ng-repeat="message in messagesList.messages">
+      <li ng-repeat="message in messages">
         {{message.content}}
       </li>
     </ul>
-    <form ng-submit="messagesList.sendMessage()">
-      <input type="text" ng-model="messagesList.newMessage.content">
+    <form ng-submit="sendMessage()">
+      <input type="text" ng-model="newMessage.content">
       <input type="submit" value="send">
     </form>
   </div>
