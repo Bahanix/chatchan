@@ -35,6 +35,8 @@ messagesApp.controller('messagesController', function($scope) {
   });
 
   $scope.knock = function() {
+    if ($scope.me.username == '') return;
+
     $scope.users = [];
     faye.publish('/users', $scope.me);
 
@@ -66,13 +68,15 @@ messagesApp.controller('messagesController', function($scope) {
   };
 
   $scope.sendMessage = function() {
+    if ($scope.newMessage.content == '') return;
+
     $scope.newMessage.disabled = true;
     $scope.users.forEach(function(user) {
       message = Object.create($scope.newMessage);
       message.content = cryptico.encrypt(message.content, user.publicKey, $scope.privateKey).cipher;
       faye.publish('/users/' + user.publicKeyID + '/messages', message);
     });
-    $scope.newMessage.content = ''
+    $scope.newMessage.content = '';
     $scope.newMessage.disabled = false;
   };
 });
