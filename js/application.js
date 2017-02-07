@@ -1,7 +1,16 @@
 var faye = new Faye.Client('https://faye.chatchan.us/faye');
-var messagesApp = angular.module('messagesApp', [])
 
-messagesApp.controller('messagesController', function($scope) {
+var emoji = new EmojiConvertor();
+emoji.include_title = true;
+emoji.img_sets.apple.sheet = 'apple.png';
+emoji.use_sheet = true;
+
+function sanitize(string){
+   return string.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+var messagesApp = angular.module('messagesApp', []);
+messagesApp.controller('messagesController', function($scope, $sce) {
   $scope.$autoScroll = document.getElementById("auto-scroll");
 
   $scope.ready = false;
@@ -46,7 +55,7 @@ messagesApp.controller('messagesController', function($scope) {
 
     faye.subscribe('/users/' + $scope.me.publicKeyID + '/messages', function(message) {
       decrypt = cryptico.decrypt(message.content, $scope.privateKey);
-      message.content = decrypt.plaintext;
+      message.content = $sce.trustAsHtml(emoji.replace_emoticons(emoji.replace_unified(sanitize(decrypt.plaintext))));
       if (decrypt.signature == 'verified') {
         message.user = $scope.users.find(function(user) {
           return user.publicKey == decrypt.publicKeyString;
