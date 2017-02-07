@@ -14,27 +14,26 @@
   <script src="/js/application.js" type="text/javascript"></script>
 </head>
 <body ng-controller="messagesController">
-  <aside class="users">
+  <aside>
     <h1>Chatchan</h1>
     <ul>
       <li class="ellipsis" ng-repeat="user in users">
-        <span class="user">
-          <span class="bullet" ng-style="{'background-color': user.color}"></span>
-          {{user.username}}
-          <small>{{user.publicKeyID}}</small>
-        </span>
+        <span class="bullet" ng-style="{'background-color': user.color}"></span>
+        <span ng-attr-title="{{message.user.publicKeyID}}" class="username">{{user.username}}</span>
       </li>
     </ul>
-    <form ng-show="!ready" ng-submit="knock()" class="row collapse">
-      <div class="small-6 columns">
-        <input type="text" placeholder="Your username" ng-model="me.username">
-      </div>
-      <div class="small-6 columns">
-        <input type="submit" value="Knock" class="button">
-      </div>
-    </form>
+    <footer>
+      <form ng-show="!ready" ng-submit="knock()">
+        <div class="input-group">
+          <input type="text" class="input-group-field" placeholder="Your username" ng-model="me.username">
+          <div class="input-group-button">
+            <input type="submit" value="Connect" class="button postfix">
+          </div>
+        </div>
+      </form>
+    </footer>
   </aside>
-  <main class="messages">
+  <main>
     <ul id="auto-scroll">
       <li ng-repeat="message in messages">
         <div class="meta">
@@ -47,12 +46,10 @@
     </ul>
     <footer class="footer">
       <form ng-show="ready" ng-submit="sendMessage()">
-        <div class="row collapse">
-          <div class="small-10 columns">
-            <input type="text" placeholder="Your message" ng-disabled="newMessage.disabled" ng-model="newMessage.content">
-          </div>
-          <div class="small-2 columns">
-            <input type="submit" value="Send" class="button">
+        <div class="input-group">
+          <input type="text" class="input-group-field" placeholder="Your message" ng-disabled="newMessage.disabled" ng-model="newMessage.content">
+          <div class="input-group-button">
+            <input type="submit" value="Send" class="button postfix">
           </div>
         </div>
       </form>

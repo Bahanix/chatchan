@@ -1,64 +1,66 @@
+/* POSITIONS */
+
 html, body, aside, main {
   height: 100%;
-}
-ul {
-  list-style-type: none;
-  margin: 0;
 }
 
 body {
   display: flex;
 }
+
 aside {
-  padding: 0 1rem;
   flex: 0 0 220px;
   overflow: hidden;
-}
-main {
-  flex: 1 1;
-}
-
-.fullWidth {
-  width: 100%;
-  margin-left: auto;
-  margin-right: auto;
-  max-width: initial;
-}
-.button {
-  width: 100%;
-}
-.users {
+  display: flex;
+  flex-direction: column;
   color: #ab9ba9;
   background-color: #4d394b;
 }
-.users h1 {
+aside h1 {
+  padding: 0 1rem;
+  flex: 0 0;
   font-size: 1.125rem;
   color: #fff;
   font-weight: 900;
   margin-top: 0.5rem;
 }
-.messages {
+aside ul {
+  padding: 0 1rem;
+  flex: 1 1;
+}
+aside footer {
+  flex: 0 0;
+}
+
+main {
+  flex: 1 1;
   color: #555459;
   background-color: #fff;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  align-items: stretch;
 }
-.messages ul {
+main ul {
   padding: 0 1rem;
   flex: 1 1;
   overflow: auto;
   padding-top: 8px;
   padding-bottom: 0.625rem;
 }
-.messages footer {
+main footer {
   flex: 0 0;
 }
-.messages footer input {
+
+/* FOUNDATION OVERWRITES */
+
+ul {
+  list-style-type: none;
   margin: 0;
-  height: 2.5rem;
 }
+.input-group {
+  margin-bottom: 0;
+}
+
 .ellipsis {
   display: block;
   text-overflow: ellipsis;
@@ -71,16 +73,19 @@ main {
   height: 9px;
   border-radius: 9px;
 }
-.username {
+
+/* CUSTOM CLASSES */
+
+main .username {
   font-weight: 900;
   color: #2c2d30;
 }
-.received_at {
+main .received_at {
   margin-left: 0.25rem;
   color: #9e9ea6;
   font-size: .75rem;
   white-space: nowrap;
 }
-.content {
+main .content {
   margin-top: -0.375rem;
 }
