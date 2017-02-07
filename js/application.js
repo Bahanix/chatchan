@@ -9,6 +9,7 @@ messagesApp.controller('messagesController', function($scope) {
     publicKey: cryptico.publicKeyString($scope.privateKey)
   }
   $scope.me.publicKeyID = cryptico.publicKeyID($scope.me.publicKey);
+  $scope.me.color = '#' + $scope.me.publicKeyID.substring(0, 6);
 
   $scope.users = [];
   $scope.messages = [];
@@ -16,6 +17,7 @@ messagesApp.controller('messagesController', function($scope) {
 
   $scope.addUser = function(newUser) {
     newUser.publicKeyID = cryptico.publicKeyID(newUser.publicKey);
+    newUser.color = '#' + newUser.publicKeyID.substring(0, 6);
     $scope.users = $scope.users.filter(function(user) {
       return user.publicKey != newUser.publicKey;
     });
@@ -46,6 +48,7 @@ messagesApp.controller('messagesController', function($scope) {
           return user.publicKey == decrypt.publicKeyString;
         });
         if (message.user !== undefined) {
+          message.received_at = Date.now();
           $scope.messages.push(message);
           $scope.$apply();
         } else {
