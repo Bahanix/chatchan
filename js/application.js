@@ -1,4 +1,4 @@
-var faye = new Faye.Client('http://faye.chatchan.us/faye');
+var faye = new Faye.Client('https://faye.chatchan.us/faye');
 var messagesApp = angular.module('messagesApp', [])
 
 messagesApp.controller('messagesController', function($scope) {
