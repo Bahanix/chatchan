@@ -1,10 +1,23 @@
-html, body, [ng-controller], .users, .messages {
+html, body, aside, main {
   height: 100%;
 }
 ul {
   list-style-type: none;
   margin: 0;
 }
+
+body {
+  display: flex;
+}
+aside {
+  padding: 0 1rem;
+  flex: 0 0 220px;
+  overflow: hidden;
+}
+main {
+  flex: 1 1;
+}
+
 .fullWidth {
   width: 100%;
   margin-left: auto;
@@ -30,17 +43,21 @@ ul {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  align-items: stretch;
 }
 .messages ul {
+  padding: 0 1rem;
   flex: 1 1;
   overflow: auto;
-  margin-top: 8px;
-  margin-bottom: 8px;
+  padding-top: 8px;
+  padding-bottom: 0.625rem;
 }
 .messages footer {
   flex: 0 0;
-  position: absolute;
-  bottom: 0;
+}
+.messages footer input {
+  margin: 0;
+  height: 2.5rem;
 }
 .ellipsis {
   display: block;

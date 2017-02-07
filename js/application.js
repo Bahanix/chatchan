@@ -2,6 +2,8 @@ var faye = new Faye.Client('http://faye.chatchan.us/faye');
 var messagesApp = angular.module('messagesApp', [])
 
 messagesApp.controller('messagesController', function($scope) {
+  $scope.$autoScroll = document.getElementById("auto-scroll");
+
   $scope.ready = false;
   $scope.privateKey = cryptico.generateRSAKey(generatePassword(40, false), 1024);
   $scope.me = {
@@ -51,6 +53,7 @@ messagesApp.controller('messagesController', function($scope) {
           message.received_at = Date.now();
           $scope.messages.push(message);
           $scope.$apply();
+          $scope.$autoScroll.scrollTop = $scope.$autoScroll.scrollHeight;
         } else {
           console.log(decrypt);
         }
