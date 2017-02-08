@@ -55,8 +55,7 @@ messagesApp.controller('messagesController', function($scope, $sce) {
 
     faye.subscribe('/users/' + $scope.me.publicKeyID + '/messages', function(message) {
       decrypt = cryptico.decrypt(message.content, $scope.privateKey);
-      emoji.text_mode = false;
-      message.content = $sce.trustAsHtml(emoji.replace_emoticons(sanitize(decrypt.plaintext)));
+      message.content = $sce.trustAsHtml(emoji.replace_unified(emoji.replace_emoticons(sanitize(decrypt.plaintext))));
       if (decrypt.signature == 'verified') {
         message.user = $scope.users.find(function(user) {
           return user.publicKey == decrypt.publicKeyString;
@@ -81,8 +80,6 @@ messagesApp.controller('messagesController', function($scope, $sce) {
     if ($scope.newMessage.content == '') return;
 
     $scope.newMessage.disabled = true;
-    emoji.text_mode = true;
-    $scope.newMessage.content = emoji.replace_unified($scope.newMessage.content);
     $scope.users.forEach(function(user) {
       message = Object.create($scope.newMessage);
       message.content = cryptico.encrypt(message.content, user.publicKey, $scope.privateKey).cipher;
