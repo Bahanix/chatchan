@@ -13,7 +13,7 @@
   <aside>
     <h1>Chatchan</h1>
     <ul>
-      <li class="ellipsis" ng-repeat="user in users">
+      <li class="ellipsis" ng-repeat="user in users track by $index">
         <span class="bullet" ng-style="{'background-color': user.color}"></span>
         <span ng-attr-title="{{message.user.publicKeyID}}" class="username">{{user.username}}</span>
       </li>
@@ -41,7 +41,7 @@
       </li>
     </ul>
     <footer class="footer">
-      <form ng-show="ready" ng-submit="sendMessage()">
+      <form ng-show="ready" ng-submit="submitMessage()">
         <div class="input-group">
           <input type="text" class="input-group-field" placeholder="Your message" ng-disabled="newMessage.disabled" ng-model="newMessage.content">
           <div class="input-group-button">
