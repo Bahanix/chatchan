@@ -15,7 +15,7 @@
     <ul>
       <li class="ellipsis" ng-repeat="user in users track by $index">
         <span class="bullet" ng-style="{'background-color': user.color}"></span>
-        <span ng-attr-title="{{message.user.publicKeyID}}" class="username">{{user.username}}</span>
+        <span ng-attr-title="{{message.user.publicKeyID}}" class="username" ng-bind="user.username"></span>
       </li>
     </ul>
     <footer>
@@ -34,8 +34,8 @@
       <li ng-repeat="message in messages">
         <div class="meta">
           <span class="bullet" ng-style="{'background-color': message.user.color}"></span>
-          <span ng-attr-title="{{message.user.publicKeyID}}" class="username">{{message.user.username}}</span>
-          <span ng-attr-title="{{message.received_at | date:'MMM d, h:mm:ss a'}}" class="received_at">{{message.received_at | date:'h:mm a'}}</span>
+          <span ng-attr-title="{{message.user.publicKeyID}}" class="username" ng-bind="message.user.username"></span>
+          <span ng-attr-title="{{message.received_at | date:'MMM d, h:mm:ss a'}}" class="received_at" ng-bind="message.received_at | date:'h:mm a'"></span>
         </div>
         <div class="content" ng-bind-html="message.content"></div>
       </li>
