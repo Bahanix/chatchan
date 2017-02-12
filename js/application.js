@@ -21,91 +21,153 @@ messagesApp.controller('messagesController', function($scope, $sce) {
     publicKey: cryptico.publicKeyString($scope.privateKey)
   }
 
-  $scope.users = [];
   $scope.messages = [];
   $scope.newMessage = { content: '' }
 
   // Add a user, overwrite if it duplicates on public key
   $scope.addUser = function(newUser) {
     setTimeout(function() {
+      newUser.received_at = Date.now();
       newUser.publicKeyID = cryptico.publicKeyID(newUser.publicKey);
       newUser.color = '#' + newUser.publicKeyID.substring(0, 6);
       $scope.users = $scope.users.filter(function(user) {
-        return user.publicKey != newUser.publicKey;
+        return newUser.publicKey != user.publicKey;
       });
       $scope.users.push(newUser);
       $scope.$apply();
     });
   }
 
-  $scope.init = function() {
-    $scope.me.publicKeyID = cryptico.publicKeyID($scope.me.publicKey);
-
-    // Add users who acknowledged my arrival
-    faye.subscribe('/users/' + $scope.me.publicKeyID + '/knockback', function(newUser) {
-      $scope.addUser(newUser);
-    });
-  }
-  $scope.init();
-
+  // Send your publicKey to people
   $scope.knock = function() {
     if ($scope.me.username == '') return;
-
-    // Initialize users list with me as first user
     $scope.users = [];
-    $scope.addUser($scope.me);
-
-    // Notify my arrival to users
-    faye.publish('/users', $scope.me);
-
-    // Be notified when other people arrive
-    faye.subscribe('/users', function(newUser) {
-      $scope.addUser(newUser);
-
-      // And acknowledge that you received their notification
-      faye.publish('/users/' + newUser.publicKeyID + '/knockback', $scope.me);
-    });
-
-    // Finaly, be ready to receive messages
-    faye.subscribe('/users/' + $scope.me.publicKeyID + '/messages', function(message) {
-      decrypt = cryptico.decrypt(message.content, $scope.privateKey);
-      message.content = $sce.trustAsHtml(emoji.replace_unified(emoji.replace_emoticons(sanitize(decrypt.plaintext))));
-      if (decrypt.signature == 'verified') {
-        message.user = $scope.users.find(function(user) {
-          return user.publicKey == decrypt.publicKeyString;
-        });
-        if (message.user !== undefined) {
-          message.received_at = Date.now();
-          $scope.messages.push(message);
-          $scope.$apply();
-          $scope.$autoScroll.scrollTop = $scope.$autoScroll.scrollHeight;
-        } else {
-          console.log("Info: can't find user for message", decrypt);
-        }
-      } else {
-        console.log("Warning: forged signature for message", decrypt);
-      }
-    });
-
-    // * randomly check if users are still connected
-    // * all messages should be broadcasted to /users to hide their nature
-    // * all message should be fully crypted, not only some values like content
-
+    faye.publish('/keys', $scope.me.publicKey);
     $scope.ready = true;
   };
 
+  // New people give their publickKey through /keys
+  faye.subscribe('/keys', function(publicKey) {
+
+    // Then send them yours with your crypted username...
+    faye.publish('/ciphers', $scope.cipherFromObject({
+      data: {
+        type: 'users',
+        attributes: $scope.me,
+      },
+
+      // ... and ask for their crypted username.
+      meta: {
+        synack: true
+      }
+    }, publicKey));
+  });
+
+  // Be prepared to receive all crypted data through /ciphers
+  faye.subscribe('/ciphers', function(cipher) { $scope.evalCipher(cipher); });
+
+  // Everything (except your publicKey at first connection) will be sent crypted
+  $scope.cipherFromObject = function(object, publicKey) {
+    return cryptico.encrypt(JSON.stringify(object), publicKey, $scope.privateKey).cipher;
+  }
+
+  // Reverses encryption with your privateKey
+  // and marks the object metadata with sender publicKey
+  $scope.objectFromCipher = function(cipher) {
+    decrypted = cryptico.decrypt(cipher, $scope.privateKey);
+    if (decrypted.status == 'success') {
+      if (decrypted.signature == 'verified') {
+        object = JSON.parse(decrypted.plaintext);
+        object.meta = object.meta || {};
+        object.meta.publicKeyString = decrypted.publicKeyString;
+        return object;
+      } else {
+        console.warn("Forged signature", decrypted);
+      }
+    }
+    return false;
+  }
+
+  // All messages from /ciphers are evaluated here
+  $scope.evalCipher = function(cipher) {
+    object = $scope.objectFromCipher(cipher);
+
+    // A lot of data will fail to be decrypted
+    // since everything is always sent to everyone
+    // in order to protect the recipient
+    if (!object) return false;
+
+    switch (object.data.type) {
+      // Somebody sent you their username. Add them to your userlist
+      case 'users':
+        $scope.addUser({
+          username: object.data.attributes.username,
+          publicKey: object.meta.publicKeyString
+        });
+
+        // Send them back your username if they asked for iit
+        if (object.meta.synack) {
+          faye.publish('/ciphers', $scope.cipherFromObject({
+            data: {
+              type: 'users',
+              attributes: $scope.me
+            }
+          }, object.meta.publicKeyString));
+        }
+        break;
+
+      // Somebody sent you a message
+      case 'messages':
+        $scope.addMessage({
+          content: $scope.emojifyContent(object.data.attributes.content),
+          user: $scope.users.find(function(user) {
+            return user.publicKey == object.meta.publicKeyString;
+          })
+        });
+        break;
+      default:
+        console.log('Unknown data type', object);
+    }
+  }
+
+  $scope.addMessage = function(message) {
+    if (!message.user) return false;
+
+    setTimeout(function() {
+      message.received_at = Date.now();
+      $scope.messages.push(message);
+      $scope.$apply();
+      $scope.scrollDown();
+    });
+  }
+
   $scope.sendMessage = function(message) {
     if (message == '') return;
+
     $scope.users.forEach(function(user) {
-      crypted_message = cryptico.encrypt(message, user.publicKey, $scope.privateKey).cipher;
-      faye.publish('/users/' + user.publicKeyID + '/messages', { content: crypted_message });
+      faye.publish('/ciphers',  $scope.cipherFromObject({
+        data: {
+          type: 'messages',
+          attributes: {
+            content: message.content
+          }
+        }
+      }, user.publicKey));
     });
   };
 
   $scope.submitMessage = function() {
     $scope.newMessage.disabled = true;
-    $scope.sendMessage($scope.newMessage.content);
+    $scope.sendMessage($scope.newMessage);
     $scope.newMessage.content = '';
     $scope.newMessage.disabled = false;
   };
+
+  $scope.scrollDown = function() {
+    $scope.$autoScroll.scrollTop = $scope.$autoScroll.scrollHeight;
+  }
+
+  $scope.emojifyContent = function(content) {
+    return $sce.trustAsHtml(emoji.replace_unified(emoji.replace_emoticons(sanitize(content))));
+  }
 });
