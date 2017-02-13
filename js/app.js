@@ -1,5 +1,7 @@
 var faye = new Faye.Client('https://faye.chatchan.us/faye');
 
+var markdown = window.markdownit();
+
 var emoji = new EmojiConvertor();
 emoji.include_title = true;
 emoji.img_sets.apple.sheet = 'apple.png';
@@ -157,7 +159,7 @@ messagesApp.controller('messagesController', function($scope, $sce) {
         })
         user.received_at = Date.now();
         $scope.addMessage({
-          content: $scope.emojifyContent(object.data.attributes.content),
+          content: $scope.renderContent(object.data.attributes.content),
           user: user
         });
         break;
@@ -203,7 +205,15 @@ messagesApp.controller('messagesController', function($scope, $sce) {
     $scope.$autoScroll.scrollTop = $scope.$autoScroll.scrollHeight;
   }
 
-  $scope.emojifyContent = function(content) {
-    return $sce.trustAsHtml(emoji.replace_unified(emoji.replace_emoticons(sanitize(content))));
+  $scope.renderContent = function(content) {
+    return $sce.trustAsHtml(
+      emoji.replace_unified(
+        emoji.replace_emoticons(
+          markdown.renderInline(
+            content
+          )
+        )
+      )
+    );
   }
 });
