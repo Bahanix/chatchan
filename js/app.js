@@ -15,6 +15,7 @@ messagesApp.controller('messagesController', function($scope, $sce) {
   $scope.ready = false;
   $scope.$autoScroll = document.getElementById("auto-scroll");
 
+  $scope.users = [];
   $scope.privateKey = cryptico.generateRSAKey(generatePassword(40, false), 1024);
   $scope.me = {
     username: 'Anonymous',
@@ -27,6 +28,8 @@ messagesApp.controller('messagesController', function($scope, $sce) {
   // Add a user, overwrite if it duplicates on public key
   $scope.addUser = function(newUser) {
     setTimeout(function() {
+      if (newUser.username == '') return false;
+
       newUser.received_at = Date.now();
       newUser.publicKeyID = cryptico.publicKeyID(newUser.publicKey);
       newUser.color = '#' + newUser.publicKeyID.substring(0, 6);
@@ -34,20 +37,49 @@ messagesApp.controller('messagesController', function($scope, $sce) {
         return newUser.publicKey != user.publicKey;
       });
       $scope.users.push(newUser);
+      $scope.users = $scope.users.sort(function(user1, user2) {
+        return user1.username.localeCompare(user2.username);
+      });
       $scope.$apply();
     });
+  }
+
+  // Remove timed out users from your userlist
+  $scope.cleanUsers = function() {
+    $scope.users = $scope.users.filter(function(user) {
+      return user.received_at > Date.now() - 30000;
+    });
+    setTimeout($scope.cleanUsers, 30000);
+  }
+
+  // Regularly ping users to spot timed out ones
+  $scope.refreshUsers = function() {
+    $scope.users.forEach(function(user) {
+      faye.publish('/ciphers', $scope.cipherFromObject({
+        data: {
+          type: 'users',
+          attributes: $scope.me,
+        },
+        meta: {
+          synack: true
+        }
+      }, user.publicKey));
+    });
+    setTimeout($scope.refreshUsers, Math.random() * 30000);
   }
 
   // Send your publicKey to people
   $scope.knock = function() {
     if ($scope.me.username == '') return;
-    $scope.users = [];
     faye.publish('/keys', $scope.me.publicKey);
     $scope.ready = true;
+    setTimeout($scope.refreshUsers, Math.random() * 30000);
+    setTimeout($scope.cleanUsers, 30000);
   };
 
   // New people give their publickKey through /keys
   faye.subscribe('/keys', function(publicKey) {
+    if (!$scope.ready) return false;
 
     // Then send them yours with your crypted username...
     faye.publish('/ciphers', $scope.cipherFromObject({
@@ -118,11 +150,13 @@ messagesApp.controller('messagesController', function($scope, $sce) {
 
       // Somebody sent you a message
       case 'messages':
+        user = $scope.users.find(function(user) {
+          return user.publicKey == object.meta.publicKeyString;
+        })
+        user.received_at = Date.now();
         $scope.addMessage({
           content: $scope.emojifyContent(object.data.attributes.content),
-          user: $scope.users.find(function(user) {
-            return user.publicKey == object.meta.publicKeyString;
-          })
+          user: user
         });
         break;
       default:
