@@ -21,7 +21,7 @@
     <footer>
       <form ng-show="!ready" ng-submit="knock()">
         <div class="input-group">
-          <input type="text" class="input-group-field" placeholder="Your username" ng-model="me.username">
+          <input type="text" class="input-group-field" placeholder="Your username" ng-model="me.username" autofocus>
           <div class="input-group-button">
             <input type="submit" value="Connect" class="button postfix">
           </div>
@@ -43,7 +43,7 @@
     <footer class="footer">
       <form ng-show="ready" ng-submit="submitMessage()">
         <div class="input-group">
-          <input type="text" class="input-group-field" placeholder="Your message" ng-disabled="newMessage.disabled" ng-model="newMessage.content">
+          <input id="messageContent" type="text" class="input-group-field" placeholder="Your message" ng-disabled="newMessage.disabled" ng-model="newMessage.content">
           <div class="input-group-button">
             <input type="submit" value="Send" class="button postfix">
           </div>

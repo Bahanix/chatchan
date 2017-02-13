@@ -14,6 +14,7 @@ var messagesApp = angular.module('messagesApp', []);
 messagesApp.controller('messagesController', function($scope, $sce) {
   $scope.ready = false;
   $scope.$autoScroll = document.getElementById("auto-scroll");
+  $scope.$messageContent = document.getElementById("messageContent");
 
   $scope.users = [];
   $scope.privateKey = cryptico.generateRSAKey(generatePassword(40, false), 1024);
@@ -73,6 +74,7 @@ messagesApp.controller('messagesController', function($scope, $sce) {
     if ($scope.me.username == '') return;
     faye.publish('/keys', $scope.me.publicKey);
     $scope.ready = true;
+    setTimeout(function() { document.getElementById("messageContent").focus() });
     setTimeout($scope.refreshUsers, Math.random() * 30000);
     setTimeout($scope.cleanUsers, 30000);
   };
