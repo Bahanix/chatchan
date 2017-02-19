@@ -26,7 +26,7 @@ messagesApp.controller('messagesController', function($scope, $sce) {
   $scope.users = [];
   $scope.privateKey = cryptico.generateRSAKey(generatePassword(40, false), 1024);
   $scope.me = {
-    username: 'Anonymous',
+    username: '',
     publicKey: cryptico.publicKeyString($scope.privateKey)
   }
 
@@ -78,7 +78,10 @@ messagesApp.controller('messagesController', function($scope, $sce) {
 
   // Send your publicKey to people
   $scope.knock = function() {
-    if ($scope.me.username == '') return;
+    if ($scope.me.username == '') {
+      $scope.me.username = 'Anonymous';
+    }
+
     faye.publish('/keys', $scope.me.publicKey);
     $scope.ready = true;
     setTimeout(function() { document.getElementById("messageContent").focus() });
