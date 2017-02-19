@@ -18,6 +18,11 @@ messagesApp.controller('messagesController', function($scope, $sce) {
   $scope.$autoScroll = document.getElementById("auto-scroll");
   $scope.$messageContent = document.getElementById("messageContent");
 
+  $scope.chan = {
+    privateKey: cryptico.generateRSAKey(window.location.href, 1024)
+  }
+  $scope.chan.publicKey = cryptico.publicKeyString($scope.chan.privateKey);
+
   $scope.users = [];
   $scope.privateKey = cryptico.generateRSAKey(generatePassword(40, false), 1024);
   $scope.me = {
@@ -103,14 +108,28 @@ messagesApp.controller('messagesController', function($scope, $sce) {
   faye.subscribe('/ciphers', function(cipher) { $scope.evalCipher(cipher); });
 
   // Everything (except your publicKey at first connection) will be sent crypted
+  // With user privateKey and then chan privateKey
   $scope.cipherFromObject = function(object, publicKey) {
-    return cryptico.encrypt(JSON.stringify(object), publicKey, $scope.privateKey).cipher;
+    return cryptico.encrypt(
+      cryptico.encrypt(
+        JSON.stringify(object), publicKey, $scope.privateKey
+      ).cipher, $scope.chan.publicKey
+    ).cipher;
   }
 
-  // Reverses encryption with your privateKey
-  // and marks the object metadata with sender publicKey
+  // Reverses encryption with channel privateKey and yours,
+  // then marks the object metadata with sender publicKey
   $scope.objectFromCipher = function(cipher) {
-    decrypted = cryptico.decrypt(cipher, $scope.privateKey);
+    decrypted = cryptico.decrypt(
+      cipher, $scope.chan.privateKey
+    );
+
+    if (decrypted.status == 'success') {
+      decrypted = cryptico.decrypt(
+        decrypted.plaintext, $scope.privateKey
+      );
+    }
+
     if (decrypted.status == 'success') {
       if (decrypted.signature == 'verified') {
         object = JSON.parse(decrypted.plaintext);
