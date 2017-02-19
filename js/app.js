@@ -55,7 +55,7 @@ messagesApp.controller('messagesController', function($scope, $sce) {
   // Remove timed out users from your userlist
   $scope.cleanUsers = function() {
     $scope.users = $scope.users.filter(function(user) {
-      return user.received_at > Date.now() - 30000;
+      return user.received_at > Date.now() - 60000;
     });
     setTimeout($scope.cleanUsers, 30000);
   }
