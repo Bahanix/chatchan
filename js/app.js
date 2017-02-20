@@ -46,7 +46,7 @@ messagesApp.controller('messagesController', function($scope, $sce) {
       });
       $scope.users.push(newUser);
       $scope.users = $scope.users.sort(function(user1, user2) {
-        return user1.username.localeCompare(user2.username);
+        return (user1.username + user1.publicKeyID).localeCompare(user2.username + user2.publicKeyID);
       });
       $scope.$apply();
     });
@@ -191,7 +191,7 @@ messagesApp.controller('messagesController', function($scope, $sce) {
   }
 
   $scope.addMessage = function(message) {
-    if (!message.user) return false;
+    if (!message.user || !message.content) return false;
 
     setTimeout(function() {
       message.received_at = Date.now();

@@ -32,7 +32,7 @@
   <main>
     <ul id="auto-scroll">
       <li ng-repeat="message in messages">
-        <div class="meta">
+        <div class="meta" ng-show="message.user.publicKeyID != messages[$index - 1].user.publicKeyID">
           <span class="bullet" ng-style="{'background-color': message.user.color}"></span>
           <span ng-attr-title="{{message.user.publicKeyID}}" class="username" ng-bind="message.user.username"></span>
           <span ng-attr-title="{{message.received_at | date:'MMM d, h:mm:ss a'}}" class="received_at" ng-bind="message.received_at | date:'h:mm a'"></span>
