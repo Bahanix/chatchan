@@ -9,26 +9,38 @@
   <link rel="stylesheet" href="css/emoji.css">
   <link rel="stylesheet" href="css/app.css">
 </head>
-<body ng-controller="messagesController">
-  <aside>
-    <h1>Chatchan</h1>
-    <ul>
-      <li class="ellipsis" ng-repeat="user in users track by $index">
-        <span class="bullet" ng-style="{'background-color': user.color}"></span>
-        <span ng-attr-title="{{message.user.publicKeyID}}" class="username" ng-bind="user.username"></span>
-      </li>
-    </ul>
-    <footer>
-      <form ng-show="!ready" ng-submit="knock()">
-        <div class="input-group">
-          <input type="text" class="input-group-field" placeholder="Anonymous" ng-model="me.username" autofocus>
-          <div class="input-group-button">
-            <input type="submit" value="Connect" class="button postfix">
-          </div>
+<body ng-class="{ ready: ready }" ng-controller="messagesController">
+  <div id="login">
+    <form ng-submit="knock()">
+      <h2>What should we call you?</h2>
+      <div class="input-group">
+        <div class="input-group-label">
+          <label for="username">
+            🔒
+          </label>
         </div>
-      </form>
-    </footer>
+        <input autocomplete="off" id="username" type="text" class="input-group-field" placeholder="Anonymous" ng-model="me.username" autofocus>
+        <div class="input-group-button">
+          <button class="button">
+            Connect
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <aside>
+    <div>
+      <h1>Chatchan</h1>
+      <ul>
+        <li class="ellipsis" ng-repeat="user in users track by $index">
+          <span class="bullet" ng-style="{'background-color': user.color}"></span>
+          <span ng-attr-title="{{message.user.publicKeyID}}" class="username" ng-bind="user.username"></span>
+        </li>
+      </ul>
+    </div>
   </aside>
+
   <main>
     <ul id="auto-scroll">
       <li ng-repeat="message in messages">
@@ -43,7 +55,7 @@
     <footer class="footer">
       <form ng-show="ready" ng-submit="submitMessage()">
         <div class="input-group">
-          <input id="messageContent" type="text" class="input-group-field" placeholder="Your message" ng-disabled="newMessage.disabled" ng-model="newMessage.content">
+          <input autocomplete="off" id="messageContent" type="text" class="input-group-field" placeholder="Your message" ng-disabled="newMessage.disabled" ng-model="newMessage.content">
           <div class="input-group-button">
             <input type="submit" value="Send" class="button postfix">
           </div>
