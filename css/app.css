@@ -22,11 +22,19 @@ body {
 }
 #login form {
   position: absolute;
-  top: 50%; left: 50%;
+  top: 50%;
+  left: 50%;
   transform: translate(-50%,-50%);
 }
 #login h2 {
   margin-bottom: 0.5em;
+  font-size: 1.5em;
+}
+@media screen and (max-width: 640px) {
+  #login form {
+    left: 10%;
+    transform: translate(-5%,-50%);
+  }
 }
 
 aside {
