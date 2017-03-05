@@ -198,10 +198,19 @@ messagesApp.controller('messagesController', function($scope, $sce) {
           content: $scope.renderContent(object.data.attributes.content),
           user: user
         });
+        $scope.renderCode();
         break;
       default:
         console.log('Unknown data type', object);
     }
+  }
+
+  $scope.renderCode = function() {
+    setTimeout(function() {
+      [].slice.call(document.getElementsByTagName("code")).forEach(function(element) {
+        hljs.highlightBlock(element);
+      });
+    });
   }
 
   $scope.addMessage = function(message) {
