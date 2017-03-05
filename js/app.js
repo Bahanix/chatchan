@@ -1,6 +1,6 @@
 var faye = new Faye.Client('https://faye.chatchan.us/faye');
 
-var markdown = window.markdownit();
+var markdown = window.markdownit().disable(['image']);
 
 var emoji = new EmojiConvertor();
 emoji.include_title = true;
@@ -84,7 +84,7 @@ messagesApp.controller('messagesController', function($scope, $sce) {
 
     faye.publish('/keys', $scope.me.publicKey);
     $scope.ready = true;
-    setTimeout(function() { document.getElementById("messageContent").focus() });
+    setTimeout(function() { $scope.$messageContent.focus() });
     setTimeout($scope.refreshUsers, Math.random() * 30000);
     setTimeout($scope.cleanUsers, 30000);
   };
@@ -216,12 +216,15 @@ messagesApp.controller('messagesController', function($scope, $sce) {
     });
   };
 
-  $scope.submitMessage = function() {
-    $scope.newMessage.disabled = true;
-    $scope.sendMessage($scope.newMessage);
-    $scope.newMessage.content = '';
-    $scope.newMessage.disabled = false;
-  };
+  $scope.newMessage.interceptEnter = function(e) {
+    if (e.keyCode == 13 && !e.shiftKey) {
+      e.preventDefault();
+      $scope.newMessage.disabled = true;
+      $scope.sendMessage($scope.newMessage);
+      $scope.newMessage.content = '';
+      $scope.newMessage.disabled = false;
+    }
+  }
 
   $scope.scrollDown = function() {
     $scope.$autoScroll.scrollTop = $scope.$autoScroll.scrollHeight;
@@ -235,7 +238,7 @@ messagesApp.controller('messagesController', function($scope, $sce) {
             content
           )
         )
-      )
+      ).replace("\n", "<br>")
     );
   }
 });

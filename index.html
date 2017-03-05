@@ -41,7 +41,7 @@
     </div>
   </aside>
 
-  <main>
+  <main ng-show="ready">
     <ul id="auto-scroll">
       <li ng-repeat="message in messages">
         <div class="meta" ng-show="message.user.publicKeyID != messages[$index - 1].user.publicKeyID">
@@ -53,14 +53,7 @@
       </li>
     </ul>
     <footer class="footer">
-      <form ng-show="ready" ng-submit="submitMessage()">
-        <div class="input-group">
-          <input autocomplete="off" id="messageContent" type="text" class="input-group-field" placeholder="Your message" ng-disabled="newMessage.disabled" ng-model="newMessage.content">
-          <div class="input-group-button">
-            <input type="submit" value="Send" class="button postfix">
-          </div>
-        </div>
-      </form>
+      <textarea id="messageContent" type="text" class="input-group-field" placeholder="Your message" ng-disabled="newMessage.disabled" ng-model="newMessage.content" ng-keydown="newMessage.interceptEnter($event)"></textarea>
     </footer>
   </main>
 
