@@ -1,6 +1,6 @@
 var faye = new Faye.Client('https://faye.chatchan.us/faye');
 
-var markdown = window.markdownit().disable(['image']);
+var markdown = window.markdownit().disable(['image', 'heading', 'lheading', 'hr']);
 
 var emoji = new EmojiConvertor();
 emoji.include_title = true;
@@ -234,11 +234,11 @@ messagesApp.controller('messagesController', function($scope, $sce) {
     return $sce.trustAsHtml(
       emoji.replace_unified(
         emoji.replace_emoticons(
-          markdown.renderInline(
+          markdown.render(
             content
           )
         )
-      ).replace("\n", "<br>")
+      )
     );
   }
 });

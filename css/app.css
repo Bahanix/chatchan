@@ -101,6 +101,9 @@ ul {
 input {
   box-shadow: none !important;
 }
+p {
+  margin-bottom: 0;
+}
 
 .ellipsis {
   display: block;
