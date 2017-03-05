@@ -1,4 +1,18 @@
-var faye = new Faye.Client('https://faye.chatchan.us/faye');
+var debug = false;
+
+if (debug) {
+  var faye = {
+    publish: function(channel, data) {
+      setTimeout(function(){ faye.callbacks[channel](data) }, 50);
+    },
+    subscribe: function(channel, callback) {
+      faye.callbacks[channel] = callback;
+    },
+    callbacks: {}
+  }
+} else {
+  var faye = new Faye.Client('https://faye.chatchan.us/faye');
+}
 
 var markdown = window.markdownit().disable(['image', 'heading', 'lheading', 'hr']);
 
