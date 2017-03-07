@@ -47,10 +47,17 @@
   <main ng-show="ready">
     <ul id="auto-scroll">
       <li ng-repeat="message in messages">
-        <div class="meta" ng-show="message.user.publicKeyID != messages[$index - 1].user.publicKeyID">
+        <div class="meta" ng-show="message.recipient != messages[$index - 1].recipient || message.user != messages[$index - 1].user">
           <span ng-attr-title="{{message.user.publicKeyID}}" ng-click="whisp(message.user)">
             <span class="bullet" ng-style="{'background-color': message.user.color}"></span>
             <span class="username" ng-bind="message.user.username"></span>
+          </span>
+          <span ng-show="message.recipient">
+            →
+            <span ng-attr-title="{{message.recipient.publicKeyID}}" ng-click="whisp(message.recipient)">
+              <span class="bullet" ng-style="{'background-color': message.recipient.color}"></span>
+              <span class="username" ng-bind="message.recipient.username"></span>
+            </span>
           </span>
           <span ng-attr-title="{{message.received_at | date:'MMM d, h:mm:ss a'}}" class="received_at" ng-bind="message.received_at | date:'h:mm a'"></span>
         </div>

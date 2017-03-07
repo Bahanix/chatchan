@@ -194,10 +194,17 @@ messagesApp.controller('messagesController', function($scope, $sce) {
         user = $scope.users.find(function(user) {
           return user.publicKey == object.meta.publicKeyString;
         })
+        recipient = null;
+        if (object.meta.recipient) {
+          recipient = $scope.users.find(function(user) {
+            return user.publicKeyID == object.meta.recipient;
+          })
+        }
         user.received_at = Date.now();
         $scope.addMessage({
           content: $scope.renderContent(object.data.attributes.content),
-          user: user
+          user: user,
+          recipient: recipient
         });
         $scope.renderCode();
         break;
@@ -236,6 +243,7 @@ messagesApp.controller('messagesController', function($scope, $sce) {
   $scope.sendMessage = function(message) {
     if (message.content == '') return;
 
+    recipient = null;
     if (message.content.startsWith("/msg ")) {
       recipient = message.content.split(" ")[1]
       users = $scope.users.filter(function(user) {
@@ -250,15 +258,22 @@ messagesApp.controller('messagesController', function($scope, $sce) {
       message.content = "*" + message.content.split(" ").splice(1).join(" ") + "*";
     }
 
-    users.forEach(function(user) {
-      faye.publish('/ciphers',  $scope.cipherFromObject({
-        data: {
-          type: 'messages',
-          attributes: {
-            content: message.content
-          }
+    payload = {
+      data: {
+        type: 'messages',
+        attributes: {
+          content: message.content
         }
-      }, user.publicKey));
+      },
+      meta: {}
+    }
+
+    if (recipient) {
+      payload.meta.recipient = recipient;
+    }
+
+    users.forEach(function(user) {
+      faye.publish('/ciphers',  $scope.cipherFromObject(payload, user.publicKey));
     });
   };
 
