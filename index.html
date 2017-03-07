@@ -65,7 +65,7 @@
       </li>
     </ul>
     <footer class="footer">
-      <textarea id="messageContent" type="text" class="input-group-field" placeholder="Your message" ng-disabled="newMessage.disabled" ng-model="newMessage.content" ng-keydown="newMessage.interceptEnter($event)"></textarea>
+      <textarea id="messageContent" type="text" class="input-group-field" placeholder="Your message" ng-disabled="newMessage.disabled" ng-model="newMessage.content" ng-keydown="newMessage.interceptEnter($event)" ng-keyup="newMessage.resize($event)"></textarea>
     </footer>
   </main>
 

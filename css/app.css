@@ -89,6 +89,11 @@ main footer {
   flex: 0 0;
 }
 
+#messageContent {
+  height: 3em;
+  transition: height 0.15s ease;
+}
+
 /* FOUNDATION OVERWRITES */
 
 ul {

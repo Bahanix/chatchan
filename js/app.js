@@ -277,6 +277,11 @@ messagesApp.controller('messagesController', function($scope, $sce) {
     });
   };
 
+  $scope.newMessage.resize = function(e) {
+    $scope.$messageContent.style.height = Math.min(10, Math.max(2, $scope.$messageContent.value.match(/^/mg).length)) + 1 + "em";
+    $scope.$autoScroll.scrollTop = $scope.$autoScroll.scrollHeight;
+  }
+
   $scope.newMessage.interceptEnter = function(e) {
     if (e.keyCode == 13 && !e.shiftKey) {
       e.preventDefault();
@@ -284,6 +289,7 @@ messagesApp.controller('messagesController', function($scope, $sce) {
       $scope.sendMessage($scope.newMessage);
       $scope.newMessage.content = '';
       $scope.newMessage.disabled = false;
+      $scope.$messageContent.style.height = "3em";
     }
   }
 
