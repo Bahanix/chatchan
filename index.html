@@ -35,8 +35,10 @@
       <h1>Chatchan</h1>
       <ul>
         <li class="ellipsis" ng-repeat="user in users track by $index">
-          <span class="bullet" ng-style="{'background-color': user.color}"></span>
-          <span ng-attr-title="{{message.user.publicKeyID}}" class="username" ng-bind="user.username"></span>
+          <span ng-attr-title="{{user.publicKeyID}}" ng-click="whisp(user)">
+            <span class="bullet" ng-style="{'background-color': user.color}"></span>
+            <span class="username" ng-bind="user.username"></span>
+          </span>
         </li>
       </ul>
     </div>
@@ -46,8 +48,10 @@
     <ul id="auto-scroll">
       <li ng-repeat="message in messages">
         <div class="meta" ng-show="message.user.publicKeyID != messages[$index - 1].user.publicKeyID">
-          <span class="bullet" ng-style="{'background-color': message.user.color}"></span>
-          <span ng-attr-title="{{message.user.publicKeyID}}" class="username" ng-bind="message.user.username"></span>
+          <span ng-attr-title="{{message.user.publicKeyID}}" ng-click="whisp(message.user)">
+            <span class="bullet" ng-style="{'background-color': message.user.color}"></span>
+            <span class="username" ng-bind="message.user.username"></span>
+          </span>
           <span ng-attr-title="{{message.received_at | date:'MMM d, h:mm:ss a'}}" class="received_at" ng-bind="message.received_at | date:'h:mm a'"></span>
         </div>
         <div class="content" ng-bind-html="message.content"></div>

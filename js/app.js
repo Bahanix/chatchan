@@ -43,6 +43,7 @@ messagesApp.controller('messagesController', function($scope, $sce) {
     username: '',
     publicKey: cryptico.publicKeyString($scope.privateKey)
   }
+  $scope.me.publicKeyID = cryptico.publicKeyID($scope.me.publicKey);
 
   $scope.messages = [];
   $scope.newMessage = { content: '' }
@@ -224,10 +225,32 @@ messagesApp.controller('messagesController', function($scope, $sce) {
     });
   }
 
-  $scope.sendMessage = function(message) {
-    if (message == '') return;
+  $scope.whisp = function(user) {
+    if ($scope.newMessage.content.startsWith("/msg ")) {
+      $scope.newMessage.content = $scope.newMessage.content.split(" ").splice(2).join(" ");
+    }
+    $scope.newMessage.content = "/msg " + user.publicKeyID + " " + $scope.newMessage.content;
+    $scope.$messageContent.focus();
+  }
 
-    $scope.users.forEach(function(user) {
+  $scope.sendMessage = function(message) {
+    if (message.content == '') return;
+
+    if (message.content.startsWith("/msg ")) {
+      recipient = message.content.split(" ")[1]
+      users = $scope.users.filter(function(user) {
+        return [recipient, $scope.me.publicKeyID].includes(user.publicKeyID);
+      });
+      message.content = message.content.split(" ").splice(2).join(" ");
+    } else {
+      users = $scope.users;
+    }
+
+    if (message.content.startsWith("/me ")) {
+      message.content = "*" + message.content.split(" ").splice(1).join(" ") + "*";
+    }
+
+    users.forEach(function(user) {
       faye.publish('/ciphers',  $scope.cipherFromObject({
         data: {
           type: 'messages',
