@@ -47,6 +47,21 @@ messagesApp.controller('messagesController', function($scope, $sce) {
 
   $scope.messages = [];
   $scope.newMessage = { content: '' }
+  $scope.unread = 0;
+  $scope.originalTitle = document.title;
+
+  window.addEventListener('focus', function() {
+    $scope.unread = 0;
+    $scope.setTitle();
+  });
+
+  $scope.setTitle = function() {
+    if ($scope.unread >= 1) {
+      document.title = '(' + $scope.unread + ') ' + $scope.originalTitle;
+    } else {
+      document.title = $scope.originalTitle;
+    }
+  }
 
   // Add a user, overwrite if it duplicates on public key
   $scope.addUser = function(newUser) {
@@ -249,6 +264,11 @@ messagesApp.controller('messagesController', function($scope, $sce) {
 
   $scope.addMessage = function(message) {
     if (!message.user || !message.content) return false;
+
+    if (!document.hasFocus()) {
+      $scope.unread++;
+      $scope.setTitle();
+    }
 
     setTimeout(function() {
       message.received_at = Date.now();
