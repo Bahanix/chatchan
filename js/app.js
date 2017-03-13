@@ -69,6 +69,15 @@ messagesApp.controller('messagesController', function($scope, $sce) {
 
   // Remove timed out users from your userlist
   $scope.cleanUsers = function() {
+    $scope.users.filter(function(user) {
+      return user.received_at <= Date.now() - 60000;
+    }).forEach(function(user) {
+      $scope.addMessage({
+        content: $scope.renderContent("*connection reset by peer*"),
+        user: user
+      });
+    });
+
     $scope.users = $scope.users.filter(function(user) {
       return user.received_at > Date.now() - 60000;
     });
@@ -109,17 +118,21 @@ messagesApp.controller('messagesController', function($scope, $sce) {
     if (!$scope.ready) return false;
 
     // Then send them yours with your crypted username...
-    faye.publish('/ciphers', $scope.cipherFromObject({
+    payload = {
       data: {
         type: 'users',
         attributes: $scope.me,
       },
+    }
 
-      // ... and ask for their crypted username.
-      meta: {
+    // ... and ask for their crypted username.
+    if (publicKey != $scope.me.publicKey) {
+      payload.meta = {
         synack: true
       }
-    }, publicKey));
+    }
+
+    faye.publish('/ciphers', $scope.cipherFromObject(payload, publicKey));
   });
 
   // Be prepared to receive all crypted data through /ciphers
@@ -173,10 +186,23 @@ messagesApp.controller('messagesController', function($scope, $sce) {
     switch (object.data.type) {
       // Somebody sent you their username. Add them to your userlist
       case 'users':
-        $scope.addUser({
+        newUser = {
           username: object.data.attributes.username,
           publicKey: object.meta.publicKeyString
-        });
+        }
+
+        // object.meta.synack is true when people already here,
+        // and we only want to display newcomers.
+        if (!object.meta.synack && $scope.users.every(function(user) {
+          return newUser.publicKey != user.publicKey;
+        })) {
+          $scope.addMessage({
+            content: $scope.renderContent("*joined the channel*"),
+            user: newUser
+          });
+        }
+
+        $scope.addUser(newUser);
 
         // Send them back your username if they asked for iit
         if (object.meta.synack) {
