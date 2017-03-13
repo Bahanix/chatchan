@@ -148,3 +148,7 @@ main .content {
   line-height: 1.25rem;
   margin-left: 14px;
 }
+
+.user {
+  cursor: pointer;
+}
