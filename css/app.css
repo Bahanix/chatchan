@@ -12,8 +12,6 @@ body {
   position: absolute;
   width: 100%;
   height: 100%;
-  color: #ab9ba9;
-  background-color: #4d394b;
   text-align: center;
 }
 .ready #login {
@@ -43,8 +41,6 @@ aside {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  color: #ab9ba9;
-  background-color: #4d394b;
 }
 body:not(.ready) aside div {
   opacity: 0;
@@ -58,7 +54,6 @@ aside h1 {
   padding: 0 1rem;
   flex: 0 0;
   font-size: 1.125rem;
-  color: #fff;
   font-weight: 900;
   margin-top: 0.5rem;
 }
@@ -72,8 +67,6 @@ aside footer {
 
 main {
   flex: 1 1;
-  color: #555459;
-  background-color: #fff;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -132,15 +125,22 @@ span.emoji-sizer {
   font-size: 1.1em;
 }
 
-/* CUSTOM CLASSES */
+/* CUSTOM CLASSES AND COLORS */
 
+#login, aside {
+  background-color: #222;
+  color: #bbb;
+}
+main {
+  color: #555;
+}
 main .username {
   font-weight: 900;
-  color: #2c2d30;
+  color: #222;
 }
 main .received_at {
   margin-left: 0.25rem;
-  color: #9e9ea6;
+  color: #aaa;
   font-size: .75rem;
   white-space: nowrap;
 }
