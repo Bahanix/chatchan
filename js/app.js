@@ -18,7 +18,7 @@ var markdown = window.markdownit().disable(['image', 'heading', 'lheading', 'hr'
 
 var emoji = new EmojiConvertor();
 emoji.include_title = true;
-emoji.img_sets.apple.sheet = 'apple.png';
+emoji.img_sets.apple.sheet = 'images/apple.png';
 emoji.use_sheet = true;
 
 function sanitize(string){
