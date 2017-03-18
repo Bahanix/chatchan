@@ -14,7 +14,7 @@ if (debug) {
   var faye = new Faye.Client('https://faye.chatchan.us/faye');
 }
 
-var markdown = window.markdownit().disable(['image', 'heading', 'lheading', 'hr']);
+var markdown = window.markdownit({ linkify: true }).disable(['image', 'heading', 'lheading', 'hr']);
 
 var emoji = new EmojiConvertor();
 emoji.include_title = true;
