@@ -33,6 +33,7 @@ messagesApp.controller('messagesController', function($scope, $sce) {
   $scope.$messageContent = document.getElementById("messageContent");
 
   $scope.chan = {
+    name: location.hash.substr(location.hash.indexOf('#') + 1),
     privateKey: cryptico.generateRSAKey(window.location.href, 1024)
   }
   $scope.chan.publicKey = cryptico.publicKeyString($scope.chan.privateKey);
@@ -115,13 +116,16 @@ messagesApp.controller('messagesController', function($scope, $sce) {
     setTimeout($scope.refreshUsers, Math.random() * 30000);
   }
 
-  // Send your publicKey to people
+  // Send your publicKey to your chan
   $scope.knock = function() {
     if ($scope.me.username == '') {
       $scope.me.username = 'Anonymous';
     }
 
-    faye.publish('/keys', $scope.me.publicKey);
+    faye.publish('/keys', cryptico.encrypt(
+      $scope.me.publicKey, $scope.chan.publicKey
+    ).cipher);
+
     $scope.ready = true;
     setTimeout(function() { $scope.$messageContent.focus() });
     setTimeout($scope.refreshUsers, Math.random() * 30000);
@@ -129,8 +133,18 @@ messagesApp.controller('messagesController', function($scope, $sce) {
   };
 
   // New people give their publickKey through /keys
-  faye.subscribe('/keys', function(publicKey) {
+  faye.subscribe('/keys', function(cryptedPublicKey) {
     if (!$scope.ready) return false;
+
+    decrypted = cryptico.decrypt(
+      cryptedPublicKey, $scope.chan.privateKey
+    );
+
+    if (decrypted.status == 'success') {
+      publicKey = decrypted.plaintext;
+    } else {
+      return false;
+    }
 
     // Then send them yours with your crypted username...
     payload = {
@@ -154,34 +168,31 @@ messagesApp.controller('messagesController', function($scope, $sce) {
   faye.subscribe('/ciphers', function(cipher) { $scope.evalCipher(cipher); });
 
   // Everything (except your publicKey at first connection) will be sent crypted
-  // With user privateKey and then chan privateKey
   $scope.cipherFromObject = function(object, publicKey) {
+    object.meta = object.meta || {};
+    object.meta.chan = $scope.chan.name;
     return cryptico.encrypt(
-      cryptico.encrypt(
-        JSON.stringify(object), publicKey, $scope.privateKey
-      ).cipher, $scope.chan.publicKey
+      JSON.stringify(object), publicKey, $scope.privateKey
     ).cipher;
   }
 
-  // Reverses encryption with channel privateKey and yours,
+  // Reverses encryption,
   // then marks the object metadata with sender publicKey
   $scope.objectFromCipher = function(cipher) {
     decrypted = cryptico.decrypt(
-      cipher, $scope.chan.privateKey
+      cipher, $scope.privateKey
     );
-
-    if (decrypted.status == 'success') {
-      decrypted = cryptico.decrypt(
-        decrypted.plaintext, $scope.privateKey
-      );
-    }
 
     if (decrypted.status == 'success') {
       if (decrypted.signature == 'verified') {
         object = JSON.parse(decrypted.plaintext);
         object.meta = object.meta || {};
         object.meta.publicKeyString = decrypted.publicKeyString;
-        return object;
+        if (object.meta.chan == $scope.chan.name) {
+          return object;
+        } else {
+          console.log("Wrong channel", decrypted);
+        }
       } else {
         console.warn("Forged signature", decrypted);
       }
