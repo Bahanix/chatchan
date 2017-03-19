@@ -28,15 +28,12 @@ function sanitize(string){
 var messagesApp = angular.module('messagesApp', []);
 
 messagesApp.controller('messagesController', function($scope, $sce) {
-  $scope.ready = false;
+  window.scope = $scope;
   $scope.$autoScroll = document.getElementById("auto-scroll");
   $scope.$messageContent = document.getElementById("messageContent");
 
-  $scope.chan = {
-    name: location.hash.substr(location.hash.indexOf('#') + 1),
-    privateKey: cryptico.generateRSAKey(window.location.href, 1024)
-  }
-  $scope.chan.publicKey = cryptico.publicKeyString($scope.chan.privateKey);
+  $scope.chans = [];
+  $scope.currentChan = null;
 
   $scope.users = [];
   $scope.privateKey = cryptico.generateRSAKey(generatePassword(40, false), 1024);
@@ -46,10 +43,53 @@ messagesApp.controller('messagesController', function($scope, $sce) {
   }
   $scope.me.publicKeyID = cryptico.publicKeyID($scope.me.publicKey);
 
-  $scope.messages = [];
   $scope.newMessage = { content: '' }
   $scope.unread = 0;
   $scope.originalTitle = document.title;
+
+  $scope.addChan = function(name) {
+    if ($scope.chans.find(function(chan) {
+      return chan.name == name;
+    })) {
+      return false;
+    }
+
+    chan = {
+      name: name,
+      privateKey: cryptico.generateRSAKey(name, 1024),
+      ready: false,
+      messages: []
+    }
+    chan.publicKey = cryptico.publicKeyString(chan.privateKey);
+    $scope.chans.push(chan);
+
+    if ($scope.chans.length == 1) {
+      $scope.setCurrentChan(chan);
+    }
+
+    return chan;
+  }
+  $scope.setCurrentChan = function(chan) {
+    $scope.currentChan = chan;
+  }
+
+  $scope.parseHash = function() {
+    chans = location.hash.substr(location.hash.indexOf('#') + 1).split(",");
+    oldChans = $scope.chans.map(function(chan) {return chan.name});
+    newChans = chans.filter(function(i) {return oldChans.indexOf(i) < 0;});
+    newChans.map($scope.addChan).forEach($scope.knock);
+    $scope.chans = $scope.chans.filter(function(i) {return chans.indexOf(i.name) >= 0;}).sort(function(chan1, chan2) {
+      return chan1.name.localeCompare(chan2.name);
+    });
+    setTimeout(function() { $scope.$apply() });
+  }
+
+  $scope.login = function() {
+    $scope.parseHash();
+    window.addEventListener('hashchange', $scope.parseHash);
+  }
+
+  if (!location.hash) location.hash = "#general,random,meta"
 
   window.addEventListener('focus', function() {
     $scope.unread = 0;
@@ -117,16 +157,16 @@ messagesApp.controller('messagesController', function($scope, $sce) {
   }
 
   // Send your publicKey to your chan
-  $scope.knock = function() {
+  $scope.knock = function(chan) {
     if ($scope.me.username == '') {
       $scope.me.username = 'Anonymous';
     }
 
     faye.publish('/keys', cryptico.encrypt(
-      $scope.me.publicKey, $scope.chan.publicKey
+      $scope.me.publicKey, chan.publicKey
     ).cipher);
 
-    $scope.ready = true;
+    chan.ready = true;
     setTimeout(function() { $scope.$messageContent.focus() });
     setTimeout($scope.refreshUsers, Math.random() * 30000);
     setTimeout($scope.cleanUsers, 30000);
@@ -134,17 +174,29 @@ messagesApp.controller('messagesController', function($scope, $sce) {
 
   // New people give their publickKey through /keys
   faye.subscribe('/keys', function(cryptedPublicKey) {
-    if (!$scope.ready) return false;
+    senderChan = null;
+    publicKey = null;
 
-    decrypted = cryptico.decrypt(
-      cryptedPublicKey, $scope.chan.privateKey
-    );
+    $scope.chans.some(function(chan) {
+      decrypted = cryptico.decrypt(
+        cryptedPublicKey, chan.privateKey
+      );
 
-    if (decrypted.status == 'success') {
-      publicKey = decrypted.plaintext;
-    } else {
+      if (decrypted.status == 'success') {
+        senderChan = chan;
+        publicKey = decrypted.plaintext;
+        return true;
+      } else {
+        return false;
+      }
+    });
+
+
+    if (!publicKey) {
       return false;
     }
+
+    if (!senderChan.ready) return false;
 
     // Then send them yours with your crypted username...
     payload = {
@@ -152,13 +204,14 @@ messagesApp.controller('messagesController', function($scope, $sce) {
         type: 'users',
         attributes: $scope.me,
       },
+      meta: {
+        chan: senderChan.name
+      }
     }
 
     // ... and ask for their crypted username.
     if (publicKey != $scope.me.publicKey) {
-      payload.meta = {
-        synack: true
-      }
+      payload.meta.synack = true;
     }
 
     faye.publish('/ciphers', $scope.cipherFromObject(payload, publicKey));
@@ -169,8 +222,6 @@ messagesApp.controller('messagesController', function($scope, $sce) {
 
   // Everything (except your publicKey at first connection) will be sent crypted
   $scope.cipherFromObject = function(object, publicKey) {
-    object.meta = object.meta || {};
-    object.meta.chan = $scope.chan.name;
     return cryptico.encrypt(
       JSON.stringify(object), publicKey, $scope.privateKey
     ).cipher;
@@ -188,11 +239,7 @@ messagesApp.controller('messagesController', function($scope, $sce) {
         object = JSON.parse(decrypted.plaintext);
         object.meta = object.meta || {};
         object.meta.publicKeyString = decrypted.publicKeyString;
-        if (object.meta.chan == $scope.chan.name) {
-          return object;
-        } else {
-          console.log("Wrong channel", decrypted);
-        }
+        return object;
       } else {
         console.warn("Forged signature", decrypted);
       }
@@ -222,7 +269,7 @@ messagesApp.controller('messagesController', function($scope, $sce) {
         if (!object.meta.synack && $scope.users.every(function(user) {
           return newUser.publicKey != user.publicKey;
         })) {
-          $scope.addMessage({
+          $scope.addMessage(object.meta.chan, {
             content: $scope.renderContent("*joined the channel*"),
             user: newUser
           });
@@ -236,6 +283,9 @@ messagesApp.controller('messagesController', function($scope, $sce) {
             data: {
               type: 'users',
               attributes: $scope.me
+            },
+            meta: {
+              chan: object.meta.chan
             }
           }, object.meta.publicKeyString));
         }
@@ -253,7 +303,7 @@ messagesApp.controller('messagesController', function($scope, $sce) {
           })
         }
         user.received_at = Date.now();
-        $scope.addMessage({
+        $scope.addMessage(object.meta.chan, {
           content: $scope.renderContent(object.data.attributes.content),
           user: user,
           recipient: recipient
@@ -273,20 +323,23 @@ messagesApp.controller('messagesController', function($scope, $sce) {
     });
   }
 
-  $scope.addMessage = function(message) {
-    if (!message.user || !message.content) return false;
+  $scope.addMessage = function(chanName, message) {
+    if (!message || !message.user || !message.content) return false;
+
+    chan = $scope.chans.find(function(chan) {
+      return chan.name == chanName;
+    });
+    if (!chan) return false;
 
     if (!document.hasFocus()) {
       $scope.unread++;
       $scope.setTitle();
     }
 
-    setTimeout(function() {
-      message.received_at = Date.now();
-      $scope.messages.push(message);
-      $scope.$apply();
-      $scope.scrollDown();
-    });
+    message.received_at = Date.now();
+    chan.messages.push(message);
+    $scope.$apply();
+    $scope.scrollDown();
   }
 
   $scope.whisp = function(user) {
@@ -322,7 +375,9 @@ messagesApp.controller('messagesController', function($scope, $sce) {
           content: message.content
         }
       },
-      meta: {}
+      meta: {
+        chan: $scope.currentChan.name
+      }
     }
 
     if (recipient) {
