@@ -144,16 +144,18 @@ messagesApp.controller('messagesController', function($scope, $sce) {
   // Regularly ping users to spot timed out ones
   $scope.refreshUsers = function() {
     $scope.users.forEach(function(user) {
-      faye.publish('/ciphers', $scope.cipherFromObject({
-        data: {
-          type: 'users',
-          attributes: $scope.me,
-        },
-        meta: {
-          synack: true
-        }
-      }, user.publicKey));
-    });
+      setTimeout(function() {
+        faye.publish('/ciphers', $scope.cipherFromObject({
+          data: {
+            type: 'users',
+            attributes: $scope.me,
+          },
+          meta: {
+            synack: true
+          }
+        }, user.publicKey));
+      });
+    }, 20);
     setTimeout($scope.refreshUsers, Math.random() * 30000);
   }
 
@@ -386,7 +388,9 @@ messagesApp.controller('messagesController', function($scope, $sce) {
     }
 
     users.forEach(function(user) {
-      faye.publish('/ciphers',  $scope.cipherFromObject(payload, user.publicKey));
+      setTimeout(function() {
+        faye.publish('/ciphers',  $scope.cipherFromObject(payload, user.publicKey));
+      }, 20);
     });
   };
 
