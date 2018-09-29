@@ -71,6 +71,7 @@ messagesApp.controller('messagesController', function($scope, $sce) {
   }
   $scope.setCurrentChan = function(chan) {
     $scope.currentChan = chan;
+    setTimeout(function() { $scope.scrollDown(); });
   }
 
   $scope.parseHash = function() {
